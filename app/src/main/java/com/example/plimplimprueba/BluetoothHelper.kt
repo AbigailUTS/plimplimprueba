@@ -29,8 +29,13 @@ class BluetoothHelper(private val context: Context) {
     private val bluetoothManager: BluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
-    private var bluetoothSocket: BluetoothSocket? = null
-    private var outputStream: OutputStream? = null
+
+    companion object {
+        @Volatile
+        private var bluetoothSocket: BluetoothSocket? = null
+        @Volatile
+        private var outputStream: OutputStream? = null
+    }
 
     // UUID estándar para SPP (Serial Port Profile)
     private val sppUuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
@@ -52,6 +57,7 @@ class BluetoothHelper(private val context: Context) {
     @SuppressLint("MissingPermission")
     suspend fun connectToDevice(deviceName: String): BluetoothConnectionResult {
         return withContext(Dispatchers.IO) {
+            Log.d(tag, "Intentando conectar con el dispositivo: $deviceName")
             if (!checkBluetoothPermissions() || bluetoothAdapter == null) {
                 Log.e(tag, "Permisos de Bluetooth no concedidos o adaptador no disponible.")
                 return@withContext BluetoothConnectionResult(false, null, null)
@@ -60,6 +66,7 @@ class BluetoothHelper(private val context: Context) {
             bluetoothAdapter.cancelDiscovery()
 
             val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
+            Log.d(tag, "Dispositivos emparejados: ${pairedDevices.map { it.name }}")
             val esp32Device: BluetoothDevice? = pairedDevices.find { it.name == deviceName }
 
             if (esp32Device == null) {
@@ -67,19 +74,28 @@ class BluetoothHelper(private val context: Context) {
                 return@withContext BluetoothConnectionResult(false, null, null)
             }
 
+            // Cerrar conexiones previas
+            try {
+                outputStream?.close()
+            } catch (e: IOException) {
+                Log.w(tag, "Error al cerrar outputStream anterior: ${e.message}")
+            }
             try {
                 bluetoothSocket?.close()
             } catch (e: IOException) {
-                Log.e(tag, "Error al cerrar el socket anterior: ${e.message}")
+                Log.w(tag, "Error al cerrar bluetoothSocket anterior: ${e.message}")
             }
 
             try {
+                Log.d(tag, "Creando socket RFCOMM con UUID SPP...")
                 bluetoothSocket = esp32Device.createRfcommSocketToServiceRecord(sppUuid)
                 bluetoothSocket?.connect()
 
                 if (bluetoothSocket?.isConnected == true) {
                     outputStream = bluetoothSocket?.outputStream
-                    Log.d(tag, "Conexión exitosa a ${esp32Device.name}")
+                    Log.d(tag, "Conexión exitosa a ${esp32Device.name} (${esp32Device.address}) ${outputStream == null}")
+                    sendData("All")
+
                     return@withContext BluetoothConnectionResult(true, esp32Device.name, esp32Device.address)
                 } else {
                     Log.e(tag, "El socket no se conectó correctamente.")
@@ -97,19 +113,30 @@ class BluetoothHelper(private val context: Context) {
             }
         }
     }
+    /**
+     * Verifica si la conexión Bluetooth está activa y lista para enviar datos.
+     */
+    fun isConnected(): Boolean {
+        return bluetoothSocket?.isConnected == true && outputStream != null
+    }
 
     suspend fun sendData(data: String): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                if (bluetoothSocket?.isConnected == true) {
+                Log.e(tag, "Dato: ${bluetoothSocket?.isConnected}")
+                Log.e(tag, "Dato2: ${outputStream != null}")
+                if (bluetoothSocket?.isConnected == true && outputStream != null) {
+                    Log.d(tag, "Enviando datos: $data")
                     outputStream?.write(data.toByteArray())
+                    outputStream?.flush()
                     true
                 } else {
-                    Log.e(tag, "No se pueden enviar datos: el socket no está conectado.")
+                    Log.e(tag, "No se pueden enviar datos: el socket no está conectado o el outputStream es nulo.")
                     false
                 }
             } catch (e: IOException) {
-                Log.e(tag, "Error al enviar datos: ${e.message}")
+                Log.e(tag, "Error al enviar datos!!  :   ${e.message}")
+                //disconnect() // Cierra la conexión si hay error de IO
                 false
             }
         }
@@ -117,11 +144,20 @@ class BluetoothHelper(private val context: Context) {
 
     fun disconnect() {
         try {
+            Log.d(tag, "Cerrando conexión Bluetooth...")
             outputStream?.close()
-            bluetoothSocket?.close()
-            Log.d(tag, "Conexión cerrada exitosamente")
         } catch (e: IOException) {
-            Log.e(tag, "Error al cerrar la conexión: ${e.message}")
+            Log.w(tag, "Error al cerrar outputStream: ${e.message}")
+        } finally {
+            outputStream = null
         }
+        try {
+            bluetoothSocket?.close()
+        } catch (e: IOException) {
+            Log.w(tag, "Error al cerrar bluetoothSocket: ${e.message}")
+        } finally {
+            bluetoothSocket = null
+        }
+        Log.d(tag, "Conexión cerrada exitosamente")
     }
 }

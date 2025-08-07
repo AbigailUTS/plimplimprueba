@@ -62,10 +62,10 @@ class PlimplimActivity : ComponentActivity() {
                 PlimplimScreen(
                     isConnected = isConnected,
                     deviceName = deviceName,
-                    onEyeLeftClick = { playSound("ojo") },
-                    onEyeRightClick = { playSound("ojo") },
-                    onEarLeftClick = { playSound("oreja") },
-                    onEarRightClick = { playSound("oreja") },
+                    onEyeLeftClick = { playSound("ojoizq") },
+                    onEyeRightClick = { playSound("ojoder") },
+                    onEarLeftClick = { playSound("orejaizq") },
+                    onEarRightClick = { playSound("orejader") },
                     onNoseClick = { playSound("nariz") },
                     onMouthClick = { playSound("boca") },
                     onHairClick = { playSound("cabello") },
@@ -79,8 +79,10 @@ class PlimplimActivity : ComponentActivity() {
         mediaPlayer?.release()
         mediaPlayer = null
         val soundResource = when (soundType) {
-            "ojo" -> R.raw.ojo
-            "oreja" -> R.raw.oreja
+            "ojoizq" -> R.raw.ojo
+            "ojoder" -> R.raw.ojo
+            "orejaizq" -> R.raw.oreja
+            "orejader" -> R.raw.oreja
             "nariz" -> R.raw.nariz
             "boca" -> R.raw.boca
             "cabello" -> R.raw.cabello
@@ -99,10 +101,19 @@ class PlimplimActivity : ComponentActivity() {
 
     private fun sendCommandToESP32(command: String) {
         CoroutineScope(Dispatchers.Main).launch {
-            // Se usa la instancia de bluetoothHelper ya inicializada en onCreate
-            val success = bluetoothHelper.sendData(command)
+            // Si el socket está desconectado, intenta reconectar automáticamente
+            var success = bluetoothHelper.sendData(command + "\n")
+            if (!success && deviceName != null) {
+                // Intenta reconectar automáticamente al ESP32
+                val result = bluetoothHelper.connectToDevice(deviceName!!)
+                isConnected = result.success
+                if (result.success) {
+                    success = bluetoothHelper.sendData(command + "\n")
+                }
+            }
             if (!success) {
                 Toast.makeText(this@PlimplimActivity, "❌ Error al enviar comando", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this@PlimplimActivity, "❌ Error al enviar comando", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -415,7 +426,7 @@ fun PlimplimScreen(
 
                     deviceName?.let { name ->
                         Text(
-                            text = "Conectado: $name",
+                            text = "Estas Conectado: $name",
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold

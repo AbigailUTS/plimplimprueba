@@ -15,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +36,8 @@ import com.example.plimplimprueba.ui.theme.PlimplimpruebaTheme
 import kotlinx.coroutines.launch
 
 
+class ConectarActivity : ComponentActivity() {
+
     private lateinit var bluetoothHelper: BluetoothHelper
     private var isConnected by mutableStateOf(false)
     private var deviceName by mutableStateOf<String?>(null)
@@ -43,7 +46,9 @@ import kotlinx.coroutines.launch
     private var isScanning by mutableStateOf(false)
 
     private val requestBluetoothPermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) @androidx.annotation.RequiresPermission(
+            android.Manifest.permission.BLUETOOTH_CONNECT
+        ) { permissions ->
             if (permissions.all { it.value }) {
                 scanForDevices()
             } else {
@@ -101,6 +106,7 @@ import kotlinx.coroutines.launch
         }
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun scanForDevices() {
         isScanning = true
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
