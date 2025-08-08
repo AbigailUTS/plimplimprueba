@@ -69,7 +69,10 @@ class PlimplimActivity : ComponentActivity() {
                     onNoseClick = { playSound("nariz") },
                     onMouthClick = { playSound("boca") },
                     onHairClick = { playSound("cabello") },
-                    onCloseClick = { navigateToClose() }
+                    onCloseClick = { navigateToClose() },
+                    onGifClick = { playSound("genial") },
+                    onBalloonClick = { playSound("efecto1") },
+                    onGif2Click = { playSound("sonido_gif2") }
                 )
             }
         }
@@ -86,6 +89,9 @@ class PlimplimActivity : ComponentActivity() {
             "nariz" -> R.raw.nariz
             "boca" -> R.raw.boca
             "cabello" -> R.raw.cabello
+            "genial" -> R.raw.genial
+            "efecto1" -> R.raw.efecto1
+            "sonido_gif2" -> R.raw.efecto1
             else -> null
         }
         if (soundResource != null) {
@@ -151,7 +157,10 @@ fun PlimplimScreen(
     onNoseClick: () -> Unit,
     onMouthClick: () -> Unit,
     onHairClick: () -> Unit,
-    onCloseClick: () -> Unit
+    onCloseClick: () -> Unit,
+    onGifClick: () -> Unit,
+    onBalloonClick: () -> Unit,
+    onGif2Click: () -> Unit
 ) {
     val isPreview = LocalInspectionMode.current
     val coroutineScope = rememberCoroutineScope()
@@ -179,6 +188,17 @@ fun PlimplimScreen(
             contentScale = ContentScale.Crop
         )
 
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current).data(R.drawable.gif2).build(),
+            contentDescription = "GIF Superior",
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .height(200.dp) // Ajusta la altura según necesites
+            .clickable { onGif2Click() },
+            contentScale = ContentScale.Fit
+        )
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -191,9 +211,10 @@ fun PlimplimScreen(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .offset(x = 15.dp, y = 100.dp)
-                    .height(250.dp)
+                    .height(150.dp)
                     .graphicsLayer(rotationZ = rotationGlobosIzquierda)
                     .clickable {
+                        onBalloonClick()
                         coroutineScope.launch {
                             val targetRotation = rotationGlobosIzquierda + 360f * 2
                             animate(
@@ -215,9 +236,10 @@ fun PlimplimScreen(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .offset(x = (-15).dp, y = 100.dp)
-                    .height(250.dp)
+                    .height(150.dp)
                     .graphicsLayer(rotationZ = rotationGlobosDerecha)
                     .clickable {
+                        onBalloonClick()
                         coroutineScope.launch {
                             val targetRotation = rotationGlobosDerecha - 360f * 2
                             animate(
@@ -237,13 +259,13 @@ fun PlimplimScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(45.dp)
+                .padding(top = 280.dp, end = 50.dp) // Aumenta el 'top' padding para bajarlo
         ) {
             Image(
                 painter = painterResource(id = R.drawable.cerrar),
                 contentDescription = "Botón para salir",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(30.dp)
                     .clickable { onCloseClick() },
                 contentScale = ContentScale.Fit
             )
@@ -252,27 +274,27 @@ fun PlimplimScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(50.dp),
+                .padding(25.dp),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.cara),
                 contentDescription = "Cara Plimplim",
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
+                    .fillMaxWidth(0.99f)
                     .aspectRatio(1f),
                 contentScale = ContentScale.Fit
             )
 
             Box(
                 modifier = Modifier
-                    .offset(x = (-20).dp, y = 35.dp)
-                    .size(15.dp)
+                    .offset(x = (-30).dp, y = 50.dp)
+                    .size(25.dp)
                     .clickable {
                         onEyeLeftClick()
                         showEyeLeft = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(3000)
                             showEyeLeft = false
                         }
                     }
@@ -280,13 +302,13 @@ fun PlimplimScreen(
 
             Box(
                 modifier = Modifier
-                    .offset(x = 20.dp, y = 35.dp)
-                    .size(15.dp)
+                    .offset(x = 30.dp, y = 50.dp)
+                    .size(25.dp)
                     .clickable {
                         onEyeRightClick()
                         showEyeRight = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(3000)
                             showEyeRight = false
                         }
                     }
@@ -294,13 +316,13 @@ fun PlimplimScreen(
 
             Box(
                 modifier = Modifier
-                    .offset(x = (-55).dp, y = (40).dp)
-                    .size(15.dp)
+                    .offset(x = (-70).dp, y = (50).dp)
+                    .size(25.dp)
                     .clickable {
                         onEarLeftClick()
                         showEarLeft = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(3000)
                             showEarLeft = false
                         }
                     }
@@ -308,13 +330,13 @@ fun PlimplimScreen(
 
             Box(
                 modifier = Modifier
-                    .offset(x = 55.dp, y = 40.dp)
-                    .size(15.dp)
+                    .offset(x = 70.dp, y = 50.dp)
+                    .size(25.dp)
                     .clickable {
                         onEarRightClick()
                         showEarRight = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(3000)
                             showEarRight = false
                         }
                     }
@@ -322,13 +344,13 @@ fun PlimplimScreen(
 
             Box(
                 modifier = Modifier
-                    .offset(x = 0.dp, y = 55.dp)
-                    .size(20.dp)
+                    .offset(x = 0.dp, y = 70.dp)
+                    .size(30.dp)
                     .clickable {
                         onNoseClick()
                         showNose = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(3000)
                             showNose = false
                         }
                     }
@@ -336,13 +358,13 @@ fun PlimplimScreen(
 
             Box(
                 modifier = Modifier
-                    .offset(x = 0.dp, y = 75.dp)
-                    .size(15.dp, 15.dp)
+                    .offset(x = 0.dp, y = 95.dp)
+                    .size(20.dp, 15.dp)
                     .clickable {
                         onMouthClick()
                         showMouth = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(3000)
                             showMouth = false
                         }
                     }
@@ -350,13 +372,13 @@ fun PlimplimScreen(
 
             Box(
                 modifier = Modifier
-                    .offset(x = 0.dp, y = (-45).dp)
-                    .size(100.dp, 30.dp)
+                    .offset(x = 0.dp, y = (-50).dp)
+                    .size(120.dp, 40.dp)
                     .clickable {
                         onHairClick()
                         showHair = true
                         coroutineScope.launch {
-                            delay(2000)
+                            delay(3000)
                             showHair = false
                         }
                     }
@@ -364,37 +386,37 @@ fun PlimplimScreen(
             AnimatedImage(
                 isVisible = showEyeLeft,
                 imageResId = PartesCuerpo.OJO.imageResId,
-                modifier = Modifier.offset(x = (0).dp, y = 200.dp)
+                modifier = Modifier.offset(x = (0).dp, y = 250.dp)
             )
             AnimatedImage(
                 isVisible = showEyeRight,
                 imageResId = PartesCuerpo.OJO.imageResId,
-                modifier = Modifier.offset(x = 0.dp, y = 200.dp)
+                modifier = Modifier.offset(x = 0.dp, y = 250.dp)
             )
             AnimatedImage(
                 isVisible = showEarLeft,
                 imageResId = PartesCuerpo.OREJA.imageResId,
-                modifier = Modifier.offset(x = (0).dp, y = 200.dp)
+                modifier = Modifier.offset(x = (0).dp, y = 250.dp)
             )
             AnimatedImage(
                 isVisible = showEarRight,
                 imageResId = PartesCuerpo.OREJA.imageResId,
-                modifier = Modifier.offset(x = 0.dp, y = 200.dp)
+                modifier = Modifier.offset(x = 0.dp, y = 250.dp)
             )
             AnimatedImage(
                 isVisible = showNose,
                 imageResId = PartesCuerpo.NARIZ.imageResId,
-                modifier = Modifier.offset(x = 0.dp, y = 200.dp)
+                modifier = Modifier.offset(x = 0.dp, y = 250.dp)
             )
             AnimatedImage(
                 isVisible = showMouth,
                 imageResId = PartesCuerpo.BOCA.imageResId,
-                modifier = Modifier.offset(x = 0.dp, y = 200.dp)
+                modifier = Modifier.offset(x = 0.dp, y = 250.dp)
             )
             AnimatedImage(
                 isVisible = showHair,
                 imageResId = PartesCuerpo.CABELLO.imageResId,
-                modifier = Modifier.offset(x = 0.dp, y = (200).dp)
+                modifier = Modifier.offset(x = 0.dp, y = (250).dp)
             )
         }
 
@@ -404,8 +426,10 @@ fun PlimplimScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .height(150.dp),
-            contentScale = ContentScale.Fit
+                .offset(y = (-20).dp) // Sube el gif 20 dp
+                .height(150.dp)
+                .clickable { onGifClick() },
+        contentScale = ContentScale.Fit
         )
 
         if (isConnected) {
@@ -449,7 +473,7 @@ private fun AnimatedImage(
             painter = painterResource(id = imageResId),
             contentDescription = null,
             modifier = modifier
-                .size(100.dp, 60.dp),
+                .size(200.dp, 120.dp),
             contentScale = ContentScale.Fit
         )
     }
@@ -465,7 +489,10 @@ fun PlimplimScreenPreview() {
             onEyeLeftClick = {}, onEyeRightClick = {},
             onEarLeftClick = {}, onEarRightClick = {},
             onNoseClick = {}, onMouthClick = {},
-            onHairClick = {}, onCloseClick = {}
+            onHairClick = {}, onCloseClick = {},
+            onGifClick = {},
+            onBalloonClick = {},
+            onGif2Click = {}
         )
     }
 }
@@ -480,7 +507,10 @@ fun PlimplimScreenConnectedPreview() {
             onEyeLeftClick = {}, onEyeRightClick = {},
             onEarLeftClick = {}, onEarRightClick = {},
             onNoseClick = {}, onMouthClick = {},
-            onHairClick = {}, onCloseClick = {}
+            onHairClick = {}, onCloseClick = {},
+            onGifClick = {},
+            onBalloonClick = {},
+            onGif2Click = {}
         )
     }
 }

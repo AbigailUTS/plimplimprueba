@@ -67,35 +67,35 @@ if (command.equals("All")) {
     if (command.equals("ojoder")) {
       Serial.println("OJODER");
       digitalWrite(LED_OJO_DER_PIN, HIGH);
-      delay(500);
+      delay(2000);
       digitalWrite(LED_OJO_DER_PIN, LOW);
     } else if (command.equals("ojoizq")) {
       Serial.println("OJOIZQ");
       digitalWrite(LED_OJO_IZQ_PIN, HIGH);
-      delay(500);
+      delay(2000);
       digitalWrite(LED_OJO_IZQ_PIN, LOW);
     } else if (command.equals("orejader")) {
       Serial.println("OREJADER");
       digitalWrite(LED_OREJA_DER_PIN, HIGH);
-      delay(500);
+      delay(2000);
       digitalWrite(LED_OREJA_DER_PIN, LOW);
     } else if (command.equals("orejaizq")) {
       Serial.println("OREJAIZQ");
       digitalWrite(LED_OREJA_IZQ_PIN, HIGH);
-      delay(500);
+      delay(2000);
       digitalWrite(LED_OREJA_IZQ_PIN, LOW);
     } else if (command.equals("nariz")) {
       digitalWrite(LED_NARIZ_PIN, HIGH);
-      delay(500);
+      delay(2000);
       digitalWrite(LED_NARIZ_PIN, LOW);
     } else if (command.equals("boca")) {
       Serial.println("BOCA ON!");
       digitalWrite(LED_BOCA_PIN, HIGH);
-      delay(500);
+      delay(2000);
       digitalWrite(LED_BOCA_PIN, LOW);
     } else if (command.equals("cabello")) {
       digitalWrite(LED_CABELLO_PIN, HIGH);
-      delay(500);
+      delay(2000);
       digitalWrite(LED_CABELLO_PIN, LOW);
     }
   }

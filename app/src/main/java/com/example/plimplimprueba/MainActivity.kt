@@ -47,7 +47,7 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
     ) {
         // Fondo de imagen
         Image(
-            painter = painterResource(id = R.drawable.fondo1),
+            painter = painterResource(id = R.drawable.fondo5),
             contentDescription = "Fondo de inicio",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop

@@ -189,7 +189,7 @@ fun ConectarScreen(
             .background(Color(0xFF1E1E1E))
     ) {
         Image(
-            painter = painterResource(id = R.drawable.fondo4),
+            painter = painterResource(id = R.drawable.fondo3),
             contentDescription = "Fondo de Plimplim",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -199,12 +199,13 @@ fun ConectarScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "CONEXIÓN BLUETOOTH",
-                color = Color(0xFF0057B8),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 32.dp)
+            Image(
+                painter = painterResource(id = R.drawable.texto3),
+                contentDescription = "Logo de Conexión Bluetooth", // Descripción para accesibilidad
+                modifier = Modifier
+                    .padding(bottom = 32.dp)
+                    .size(250.dp), // Ajusta el tamaño según necesites, por ejemplo 150.dp
+                contentScale = ContentScale.Fit // O ContentScale.Crop, según como quieras que se ajuste
             )
             Button(
                 onClick = onScanClick,
@@ -220,7 +221,7 @@ fun ConectarScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
-                        .background(Color(0xFF222222))
+                        .background(Color(0xFFFF9800))
                         .padding(8.dp)
                 ) {
                     availableDevices.forEach { device ->
