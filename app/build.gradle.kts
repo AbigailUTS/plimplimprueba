@@ -78,4 +78,10 @@ dependencies {
 
     // Manejo de permisos
     implementation("com.google.accompanist:accompanist-permissions:0.28.0")
-}
+
+// implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+// Usa la nueva dependencia de la versión 4.3.0 o superior
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0") {
+        exclude(group = "com.android.support")
+    }
+    }

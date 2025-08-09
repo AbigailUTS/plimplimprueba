@@ -11,14 +11,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +36,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.plimplimprueba.ui.theme.PlimplimpruebaTheme
 import kotlinx.coroutines.launch
+import com.google.zxing.integration.android.IntentIntegrator
+import com.google.zxing.integration.android.IntentResult
 
 
 class ConectarActivity : ComponentActivity() {
@@ -45,6 +49,7 @@ class ConectarActivity : ComponentActivity() {
     private var availableDevices by mutableStateOf<List<BluetoothDevice>>(emptyList())
     private var isScanning by mutableStateOf(false)
 
+    // Lanzador para solicitar permisos de Bluetooth
     private val requestBluetoothPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) @androidx.annotation.RequiresPermission(
             android.Manifest.permission.BLUETOOTH_CONNECT
@@ -55,6 +60,31 @@ class ConectarActivity : ComponentActivity() {
                 Toast.makeText(this, "Permisos de Bluetooth denegados", Toast.LENGTH_SHORT).show()
             }
         }
+
+    // NUEVO: Lanzador para solicitar permisos de la cámara
+    private val requestCameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                startQRScanner()
+            } else {
+                Toast.makeText(this, "Permiso de cámara denegado.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    // NUEVO: Lanzador para el resultado del escáner de QR
+    private val qrCodeScannerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val intentResult: IntentResult = IntentIntegrator.parseActivityResult(result.resultCode, result.data)
+        val scannedData = intentResult.contents
+        if (scannedData != null) {
+            // Aquí puedes manejar el resultado del QR
+            Toast.makeText(this, "QR Escaneado: $scannedData", Toast.LENGTH_LONG).show()
+            // Por ejemplo, podrías intentar conectar al dispositivo con el nombre del QR
+            connectToDeviceFromQR(scannedData)
+        } else {
+            Toast.makeText(this, "Escaneo cancelado", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,10 +102,19 @@ class ConectarActivity : ComponentActivity() {
                         connectToSelectedDevice(device)
                     },
                     onScanClick = {
-                        checkAndRequestPermissions()
+                        if (availableDevices.isNotEmpty()) {
+                            availableDevices = emptyList()
+                            isScanning = false
+                        } else {
+                            checkAndRequestPermissions()
+                        }
                     },
                     onContinueWithoutConnection = {
                         navigateToPlimplimActivity()
+                    },
+                    // NUEVO: Pasa la función para escanear el QR
+                    onScanQRClick = {
+                        checkAndRequestCameraPermission()
                     }
                 )
             }
@@ -84,7 +123,6 @@ class ConectarActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Verificamos si la conexión se estableció al regresar de la configuración
         if (bluetoothHelper.isEnabled()) {
             checkForConnectionStatus()
         }
@@ -106,11 +144,58 @@ class ConectarActivity : ComponentActivity() {
         }
     }
 
+    // NUEVO: Función para verificar y solicitar permisos de la cámara
+    private fun checkAndRequestCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startQRScanner()
+        } else {
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    // NUEVO: Función para iniciar el escáner de QR
+    private fun startQRScanner() {
+        // La biblioteca zxing requiere que la activity sea la que maneje el resultado,
+        // por eso usamos el lanzador de actividades para envolver su intent
+        val integrator = IntentIntegrator(this)
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+        integrator.setPrompt("Escanea el código QR del dispositivo")
+        integrator.setCameraId(0)  // Usa la cámara trasera
+        integrator.setBeepEnabled(false)
+        integrator.setBarcodeImageEnabled(true)
+        val intent = integrator.createScanIntent()
+        qrCodeScannerLauncher.launch(intent)
+    }
+
+    // NUEVO: Función para intentar conectar a un dispositivo a partir de un valor de QR
+    private fun connectToDeviceFromQR(scannedData: String) {
+        lifecycleScope.launch {
+            val result = bluetoothHelper.connectToDevice(scannedData)
+            isConnected = result.success
+            deviceName = result.deviceName
+            deviceAddress = result.deviceAddress
+
+            if (result.success) {
+                Toast.makeText(this@ConectarActivity, "Conectado a ${result.deviceName} vía QR", Toast.LENGTH_SHORT).show()
+                navigateToPlimplimActivity(true, result.deviceName, result.deviceAddress)
+            } else {
+                Toast.makeText(this@ConectarActivity, "No se pudo conectar con el dispositivo del QR.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun scanForDevices() {
         isScanning = true
         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        val bonded = bluetoothAdapter?.bondedDevices?.toList() ?: emptyList()
+        val bonded = try {
+            bluetoothAdapter?.bondedDevices?.toList() ?: emptyList()
+        } catch (e: SecurityException) {
+            Toast.makeText(this, "Permiso de Bluetooth denegado. No se pueden obtener dispositivos emparejados.", Toast.LENGTH_LONG).show()
+            isScanning = false
+            return
+        }
+
         availableDevices = bonded
         isScanning = false
         if (bonded.isEmpty()) {
@@ -136,7 +221,6 @@ class ConectarActivity : ComponentActivity() {
 
     private fun checkForConnectionStatus() {
         lifecycleScope.launch {
-            // Intentamos conectar de forma silenciosa para verificar el estado
             val result = bluetoothHelper.connectToDevice("Plimplim_ESP32")
             isConnected = result.success
             deviceName = result.deviceName
@@ -181,7 +265,9 @@ fun ConectarScreen(
     isScanning: Boolean,
     onDeviceSelected: (BluetoothDevice) -> Unit,
     onScanClick: () -> Unit,
-    onContinueWithoutConnection: () -> Unit
+    onContinueWithoutConnection: () -> Unit,
+    // NUEVO: Recibe la función para el escáner de QR
+    onScanQRClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -197,16 +283,18 @@ fun ConectarScreen(
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
+            Spacer(modifier = Modifier.height(30.dp))
             Image(
                 painter = painterResource(id = R.drawable.texto3),
-                contentDescription = "Logo de Conexión Bluetooth", // Descripción para accesibilidad
+                contentDescription = "Logo de Conexión Bluetooth",
                 modifier = Modifier
-                    .padding(bottom = 32.dp)
-                    .size(250.dp), // Ajusta el tamaño según necesites, por ejemplo 150.dp
-                contentScale = ContentScale.Fit // O ContentScale.Crop, según como quieras que se ajuste
+                    .padding(bottom = 20.dp)
+                    .size(250.dp),
+                contentScale = ContentScale.Fit
             )
+            
             Button(
                 onClick = onScanClick,
                 modifier = Modifier
@@ -232,7 +320,10 @@ fun ConectarScreen(
                                 .padding(vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
                         ) {
-                            Text("${device.name ?: "Sin nombre"}\n${device.address}", color = Color.White)
+                            Text(
+                                "${device.name ?: "Sin nombre"}\n${device.address}",
+                                color = Color.White
+                            )
                         }
                     }
                 }
@@ -254,6 +345,28 @@ fun ConectarScreen(
             ) {
                 Text("Continuar sin conexión", color = Color.White)
             }
+            // NUEVO: Botón para escanear QR
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onScanQRClick,
+                modifier = Modifier
+                    .size(100.dp), // Define un tamaño fijo para el botón cuadrado
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), // Fondo transparente
+                contentPadding = PaddingValues(0.dp) // Elimina el padding interno del botón
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center, // Centra el icono dentro del Box
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.qr),
+                        contentDescription = "Escanear QR",
+                        tint = Color.Blue, // Cambia el color del icono si lo deseas
+                        modifier = Modifier.size(100.dp) // Ajusta el tamaño del icono
+                    )
+                }
+            }
         }
     }
 }
@@ -270,7 +383,8 @@ fun ConectarScreenPreview() {
             isScanning = false,
             onDeviceSelected = {},
             onScanClick = {},
-            onContinueWithoutConnection = {}
+            onContinueWithoutConnection = {},
+            onScanQRClick = {}
         )
     }
 }
