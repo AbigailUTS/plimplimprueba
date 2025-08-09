@@ -47,8 +47,15 @@
 
         <activity
             android:name=".ConectarActivity"
+            android:screenOrientation="portrait"
+            tools:replace="screenOrientation"
             android:exported="false"
             android:theme="@style/Theme.Plimplimprueba" />
+
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="portrait"
+            tools:replace="screenOrientation" />
 
         <activity
             android:name=".PlimplimActivity"

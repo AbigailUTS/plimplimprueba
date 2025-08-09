@@ -163,6 +163,7 @@ class ConectarActivity : ComponentActivity() {
         integrator.setCameraId(0)  // Usa la cámara trasera
         integrator.setBeepEnabled(false)
         integrator.setBarcodeImageEnabled(true)
+        integrator.setOrientationLocked(true)
         val intent = integrator.createScanIntent()
         qrCodeScannerLauncher.launch(intent)
     }
@@ -230,7 +231,7 @@ class ConectarActivity : ComponentActivity() {
                 Toast.makeText(this@ConectarActivity, "Conectado a ${result.deviceName}", Toast.LENGTH_SHORT).show()
                 navigateToPlimplimActivity(true, result.deviceName, result.deviceAddress)
             } else {
-                Toast.makeText(this@ConectarActivity, "Placa no conectada. Por favor, conéctala manualmente.", Toast.LENGTH_LONG).show()
+                //Toast.makeText(this@ConectarActivity, "Placa no conectada. Por favor, conéctala manualmente.", Toast.LENGTH_LONG).show()
             }
         }
     }
