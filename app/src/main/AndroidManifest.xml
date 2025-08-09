@@ -18,9 +18,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/logosplash2"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/logosplash2"
         android:supportsRtl="true"
         android:theme="@style/Theme.Plimplimprueba"
         tools:targetApi="31">
@@ -31,13 +31,16 @@
             android:theme="@style/Theme.Plimplimprueba">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
+
         <activity
             android:name=".InicioActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Plimplimprueba">
+        </activity>
             android:exported="false"
             android:theme="@style/Theme.Plimplimprueba" />
             

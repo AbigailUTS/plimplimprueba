@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/fondo5" />
+    <item android:drawable="@drawable/logosplash" />
+    <!-- Si quieres agregar el texto, descomenta la siguiente línea -->
+    <!-- <item android:drawable="@drawable/texto1" /> -->
+</layer-list>
